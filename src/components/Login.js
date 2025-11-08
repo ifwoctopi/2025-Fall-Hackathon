@@ -42,19 +42,23 @@ const Login = () => {
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
 
-    if (cardRef.current) {
-      cardObserver.observe(cardRef.current);
+    // Copy ref values to variables for cleanup
+    const currentCardRef = cardRef.current;
+    const currentFeaturesRef = featuresRef.current;
+
+    if (currentCardRef) {
+      cardObserver.observe(currentCardRef);
     }
-    if (featuresRef.current) {
-      featuresObserver.observe(featuresRef.current);
+    if (currentFeaturesRef) {
+      featuresObserver.observe(currentFeaturesRef);
     }
 
     return () => {
-      if (cardRef.current) {
-        cardObserver.unobserve(cardRef.current);
+      if (currentCardRef) {
+        cardObserver.unobserve(currentCardRef);
       }
-      if (featuresRef.current) {
-        featuresObserver.unobserve(featuresRef.current);
+      if (currentFeaturesRef) {
+        featuresObserver.unobserve(currentFeaturesRef);
       }
     };
   }, []);
@@ -99,7 +103,7 @@ const Login = () => {
           }
         }
       } else {
-        const { data, error: signInError } = await signIn(email, password);
+        const { error: signInError } = await signIn(email, password);
         if (signInError) {
           let errorMessage = signInError.message || 'Failed to sign in';
           // Provide more helpful error messages
