@@ -2,13 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { saveSearch, getSearchHistory } from '../services/searchService';
-import { searchDictionary } from '../services/dictionaryService';
-import { Upload, Search as SearchIcon, FileText, X, History, Trash2, Book } from 'lucide-react';
+import { Upload, FileText, X, History, Book } from 'lucide-react';
 import './Search.css';
 
 const Search = () => {
   const [medicalText, setMedicalText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -16,9 +14,6 @@ const Search = () => {
   const [fileName, setFileName] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [dictionaryResults, setDictionaryResults] = useState([]);
-  const [showDictionaryResults, setShowDictionaryResults] = useState(false);
-  const [searchMode, setSearchMode] = useState('ai'); // 'ai' or 'dictionary'
   const fileInputRef = useRef(null);
   const { user, userEmail, logout } = useAuth();
   const navigate = useNavigate();
@@ -119,10 +114,10 @@ const Search = () => {
         setResult(data.result);
         setShowResults(true);
         
-        // Save search to Supabase if user is logged in
-        if (user && user.id) {
+        // Save search to Supabase if user is logged in (but not for file uploads)
+        if (user && user.id && !fileUploaded) {
           try {
-            await saveSearch(user.id, text, data.result, fileUploaded);
+            await saveSearch(user.id, text, data.result, false);
             // Reload search history
             loadSearchHistory();
           } catch (saveError) {
@@ -152,46 +147,6 @@ const Search = () => {
     await simplifyText(medicalText);
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setMedicalText(searchQuery);
-      if (searchMode === 'dictionary') {
-        await searchDictionaryTerms(searchQuery);
-      } else {
-        await simplifyText(searchQuery);
-      }
-    }
-  };
-
-  const searchDictionaryTerms = async (term) => {
-    setIsLoading(true);
-    setShowDictionaryResults(false);
-    setShowResults(false);
-
-    try {
-      const { data, error } = await searchDictionary(term, false);
-      
-      if (error) {
-        throw new Error(error.message || 'Failed to search dictionary');
-      }
-
-      if (data && data.length > 0) {
-        setDictionaryResults(data);
-        setShowDictionaryResults(true);
-      } else {
-        alert('No medical terms found. Try searching with AI simplification instead.');
-        setSearchMode('ai');
-        await simplifyText(term);
-      }
-    } catch (error) {
-      console.error('Error searching dictionary:', error);
-      alert(`Failed to search dictionary: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleRemoveFile = () => {
     setUploadedFile(null);
     setFileName('');
@@ -205,9 +160,6 @@ const Search = () => {
     setMedicalText('');
     setResult('');
     setShowResults(false);
-    setShowDictionaryResults(false);
-    setDictionaryResults([]);
-    setSearchQuery('');
     handleRemoveFile();
   };
 
@@ -225,45 +177,16 @@ const Search = () => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-logo">
-            <h2>🏥 Medical Simplifier</h2>
-          </div>
-          <div className="nav-search-bar">
-            <form onSubmit={handleSearch} className="search-bar-form">
-              <div className="search-input-wrapper">
-                <SearchIcon className="search-icon" size={20} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Quick search medical instructions or terms..."
-                  className="search-bar-input"
-                />
-              </div>
-              <div className="search-mode-toggle">
-                <button
-                  type="button"
-                  onClick={() => setSearchMode('dictionary')}
-                  className={`mode-btn ${searchMode === 'dictionary' ? 'active' : ''}`}
-                  title="Search Medical Dictionary"
-                >
-                  <Book size={16} />
-                  Dictionary
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchMode('ai')}
-                  className={`mode-btn ${searchMode === 'ai' ? 'active' : ''}`}
-                  title="AI Simplification"
-                >
-                  AI
-                </button>
-              </div>
-              <button type="submit" className="btn btn-primary search-btn">
-                Search
-              </button>
-            </form>
+            <h2>🏥 Medi-Chat</h2>
           </div>
           <div className="nav-user">
+            <button 
+              className="dictionary-btn" 
+              onClick={() => navigate('/dictionary')}
+            >
+              <Book size={16} />
+              Dictionary
+            </button>
             <span>{userEmail}</span>
             <button className="btn btn-secondary" onClick={handleLogout}>
               Logout
@@ -346,39 +269,6 @@ const Search = () => {
               <div className="result-content">{result}</div>
               <button className="btn btn-secondary" onClick={handleClear}>
                 Clear Results
-              </button>
-            </div>
-          )}
-
-          {showDictionaryResults && dictionaryResults.length > 0 && (
-            <div className="results-container dictionary-results">
-              <h2>
-                <Book size={24} className="inline-icon" />
-                Medical Dictionary Results
-              </h2>
-              <div className="dictionary-list">
-                {dictionaryResults.map((item) => (
-                  <div key={item.id} className="dictionary-item">
-                    <h3 className="dictionary-term">{item.medical_term}</h3>
-                    <p className="dictionary-definition">{item.definition}</p>
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        setMedicalText(item.medical_term);
-                        setSearchMode('ai');
-                        simplifyText(item.medical_term);
-                      }}
-                    >
-                      Simplify with AI
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button className="btn btn-secondary" onClick={() => {
-                setShowDictionaryResults(false);
-                setDictionaryResults([]);
-              }}>
-                Close
               </button>
             </div>
           )}

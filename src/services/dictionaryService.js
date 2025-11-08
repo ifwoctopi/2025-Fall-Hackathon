@@ -12,23 +12,16 @@ export const searchDictionary = async (searchTerm, useFullTextSearch = false) =>
       return { data: [], error: null };
     }
 
-    if (useFullTextSearch) {
-      // Use full-text search function for better performance
-      const { data, error } = await supabase.rpc('search_dictionary_fts', {
-        search_term: searchTerm.trim()
-      });
+    // Direct query to include why_matters field
+    const { data, error } = await supabase
+      .from('dictionary')
+      .select('id, medical_term, definition, why_matters')
+      .or(`medical_term.ilike.%${searchTerm.trim()}%,definition.ilike.%${searchTerm.trim()}%`)
+      .order('medical_term', { ascending: true })
+      .limit(50);
 
-      if (error) throw error;
-      return { data: data || [], error: null };
-    } else {
-      // Use simple search function
-      const { data, error } = await supabase.rpc('search_dictionary', {
-        search_term: searchTerm.trim()
-      });
-
-      if (error) throw error;
-      return { data: data || [], error: null };
-    }
+    if (error) throw error;
+    return { data: data || [], error: null };
   } catch (error) {
     console.error('Error searching dictionary:', error);
     return { data: null, error };
@@ -44,7 +37,7 @@ export const getDictionaryTerm = async (term) => {
   try {
     const { data, error } = await supabase
       .from('dictionary')
-      .select('*')
+      .select('id, medical_term, definition, why_matters')
       .ilike('medical_term', term)
       .limit(1)
       .single();
@@ -63,11 +56,11 @@ export const getDictionaryTerm = async (term) => {
  * @param {number} offset - Offset for pagination
  * @returns {Promise<{data: Array, error: Error|null}>}
  */
-export const getAllDictionaryTerms = async (limit = 100, offset = 0) => {
+export const getAllDictionaryTerms = async (limit = 1000, offset = 0) => {
   try {
     const { data, error } = await supabase
       .from('dictionary')
-      .select('*')
+      .select('id, medical_term, definition, why_matters')
       .order('medical_term', { ascending: true })
       .range(offset, offset + limit - 1);
 
@@ -78,5 +71,6 @@ export const getAllDictionaryTerms = async (limit = 100, offset = 0) => {
     return { data: null, error };
   }
 };
+
 
 
