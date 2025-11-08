@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAllDictionaryTerms } from '../services/dictionaryService';
@@ -12,13 +12,30 @@ const Dictionary = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const { user, userEmail, logout } = useAuth();
+  const { userEmail, logout } = useAuth();
   const navigate = useNavigate();
+
+  const loadAllTerms = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await getAllDictionaryTerms();
+      if (error) {
+        throw new Error(error.message || 'Failed to load dictionary terms');
+      }
+      setAllTerms(data || []);
+      setFilteredTerms(data || []);
+    } catch (error) {
+      console.error('Error loading dictionary terms:', error);
+      alert(`Failed to load dictionary: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Load all terms on component mount
   useEffect(() => {
     loadAllTerms();
-  }, []);
+  }, [loadAllTerms]);
 
   // Filter terms based on search query
   useEffect(() => {
@@ -35,23 +52,6 @@ const Dictionary = () => {
       setFilteredTerms(filtered);
     }
   }, [searchQuery, allTerms]);
-
-  const loadAllTerms = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await getAllDictionaryTerms();
-      if (error) {
-        throw new Error(error.message || 'Failed to load dictionary terms');
-      }
-      setAllTerms(data || []);
-      setFilteredTerms(data || []);
-    } catch (error) {
-      console.error('Error loading dictionary terms:', error);
-      alert(`Failed to load dictionary: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearch = (e) => {
     e.preventDefault();

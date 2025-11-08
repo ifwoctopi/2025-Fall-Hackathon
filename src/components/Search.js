@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { saveSearch, getSearchHistory } from '../services/searchService';
@@ -25,14 +25,7 @@ const Search = () => {
     'What does this medical procedure involve?'
   ];
 
-  // Load search history on component mount
-  useEffect(() => {
-    if (user) {
-      loadSearchHistory();
-    }
-  }, [user]);
-
-  const loadSearchHistory = async () => {
+  const loadSearchHistory = useCallback(async () => {
     if (!user) return;
     try {
       const { data, error } = await getSearchHistory(user.id, 10);
@@ -42,7 +35,14 @@ const Search = () => {
     } catch (error) {
       console.error('Error loading search history:', error);
     }
-  };
+  }, [user]);
+
+  // Load search history on component mount
+  useEffect(() => {
+    if (user) {
+      loadSearchHistory();
+    }
+  }, [user, loadSearchHistory]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];

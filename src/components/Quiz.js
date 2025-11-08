@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAllDictionaryTerms } from '../services/dictionaryService';
@@ -19,16 +19,12 @@ const Quiz = () => {
   const [answeredQuestions, setAnsweredQuestions] = useState(new Set()); // Track which questions have been answered
   const [userAnswers, setUserAnswers] = useState({}); // Store user's answers: { questionIndex: answerId }
   const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double-submission
-  const { user, userEmail, logout } = useAuth();
+  const { userEmail, logout } = useAuth();
   const navigate = useNavigate();
 
   const QUESTION_COUNT = 10;
 
-  useEffect(() => {
-    loadAllTerms();
-  }, []);
-
-  const loadAllTerms = async () => {
+  const loadAllTerms = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await getAllDictionaryTerms();
@@ -42,7 +38,11 @@ const Quiz = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadAllTerms();
+  }, [loadAllTerms]);
 
   const startQuiz = () => {
     if (allTerms.length < QUESTION_COUNT) {
