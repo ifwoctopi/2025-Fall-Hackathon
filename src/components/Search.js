@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { saveSearch, getSearchHistory } from '../services/searchService';
 import { Upload, FileText, X, History, Book } from 'lucide-react';
+import API_URL from '../config/api';
 import './Search.css';
 
 const Search = () => {
@@ -62,7 +63,7 @@ const Search = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -85,7 +86,7 @@ const Search = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert(`Failed to upload file: ${error.message}\n\nMake sure the backend API is running on http://localhost:5000`);
+      alert(`Failed to upload file: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +97,7 @@ const Search = () => {
     setShowResults(false);
 
     try {
-      const response = await fetch('http://localhost:5000/api/simplify', {
+      const response = await fetch(`${API_URL}/api/simplify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ const Search = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert(`Failed to simplify instructions: ${error.message}\n\nMake sure the backend API is running on http://localhost:5000`);
+      alert(`Failed to simplify instructions: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
