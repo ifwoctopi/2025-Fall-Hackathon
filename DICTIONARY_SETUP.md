@@ -190,3 +190,4 @@ INSERT INTO dictionary (medical_term, definition) VALUES
 4. Add more terms as needed
 5. Consider adding categories or tags for better organization
 
+

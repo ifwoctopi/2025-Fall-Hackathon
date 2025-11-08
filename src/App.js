@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Search from './components/Search';
+import Dictionary from './components/Dictionary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -31,6 +32,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Search />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dictionary"
+        element={
+          <ProtectedRoute>
+            <Dictionary />
           </ProtectedRoute>
         }
       />
