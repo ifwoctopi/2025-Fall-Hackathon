@@ -21,6 +21,10 @@ api_key = os.environ.get("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable is not set. Please create a .env file with your API key.")
 
+# Security: Validate API key format (starts with sk-)
+if not api_key.startswith("sk-"):
+    raise ValueError("Invalid API key format. OpenAI API keys should start with 'sk-'.")
+
 client = OpenAI(api_key=api_key)
 
 def simplify_instructions(raw_text: str):
@@ -51,7 +55,11 @@ Your job is to rephrase medical or device instructions into plain, easy-to-under
         
         return response.choices[0].message.content
     except Exception as e:
-        raise Exception(f"Error calling OpenAI API: {str(e)}")
+        # Security: Don't expose full API key in error messages
+        error_msg = str(e)
+        if api_key in error_msg:
+            error_msg = error_msg.replace(api_key, "***REDACTED***")
+        raise Exception(f"Error calling OpenAI API: {error_msg}")
 
 @app.route('/api/simplify', methods=['POST'])
 def simplify():
@@ -175,5 +183,8 @@ def health():
     return jsonify({'status': 'healthy'}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Security: In production, set debug=False and use environment variables
+    # debug=True should only be used in development
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(debug=debug_mode, port=5000)
 

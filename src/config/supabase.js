@@ -10,8 +10,18 @@ const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Missing Supabase environment variables. Please create a .env file with REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY'
+    'Missing Supabase environment variables. Please create a .env file with REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY. See .env.example for reference.'
   );
+}
+
+// Security: Validate Supabase URL format
+if (!supabaseUrl.startsWith('https://')) {
+  console.warn('Warning: Supabase URL should start with https://');
+}
+
+// Security: Validate anon key format (Supabase anon keys are typically JWT tokens)
+if (supabaseAnonKey.length < 100) {
+  console.warn('Warning: Supabase anon key format may be invalid');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
