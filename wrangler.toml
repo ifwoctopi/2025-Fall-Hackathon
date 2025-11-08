@@ -1,14 +1,7 @@
-# Cloudflare Pages Configuration
-# 
-# IMPORTANT: This file is optional for Pages deployments.
-# For Pages, use: npx wrangler pages deploy build --project-name=medi-chat
-# 
-# Do NOT use: wrangler deploy (that's for Workers, not Pages)
-#
-# For automatic deployments, use Cloudflare Dashboard:
-# - Connect your Git repository
-# - Set build command: npm run build
-# - Set output directory: build
-
 name = "medi-chat"
 compatibility_date = "2024-01-01"
+[assets]
+directory = "./build"
+
+
+
