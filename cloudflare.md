@@ -20,15 +20,18 @@ This is a **React static site** that should be deployed to **Cloudflare Pages**,
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. Navigate to **Pages** → **Create a project**
 3. Connect your Git repository (GitHub, GitLab, etc.)
-4. Configure build settings:
-   - **Framework preset**: React
+4. **Configure build settings** (CRITICAL - must be set manually):
+   - **Framework preset**: `React` (or `Create React App`)
    - **Build command**: `npm run build`
    - **Build output directory**: `build`
-   - **Root directory**: `/` (or leave empty)
-5. Add environment variables:
-   - `REACT_APP_SUPABASE_URL`
-   - `REACT_APP_SUPABASE_ANON_KEY`
+   - **Root directory**: `/` (leave empty or set to `/`)
+   - **Node version**: `18` or higher
+5. **Add environment variables** (under Settings → Environment variables):
+   - `REACT_APP_SUPABASE_URL` = Your Supabase project URL
+   - `REACT_APP_SUPABASE_ANON_KEY` = Your Supabase anonymous key
 6. Click **Save and Deploy**
+
+**⚠️ IMPORTANT**: If you see "No build command specified", you must manually set the build settings in the dashboard. Cloudflare Pages may not auto-detect the build configuration.
 
 ### Option 2: Deploy via Wrangler CLI
 
@@ -123,29 +126,60 @@ The `public/_redirects` file ensures that all routes are handled by React Router
 
 ## Troubleshooting
 
+### Error: "No build command specified. Skipping build step."
+
+**Cause**: Cloudflare Pages didn't detect the build configuration.
+
+**Solution**:
+
+1. Go to Cloudflare Dashboard → Pages → Your Project → Settings
+2. Under **Builds & deployments**, set:
+   - **Build command**: `npm run build`
+   - **Build output directory**: `build`
+   - **Root directory**: `/` (or leave empty)
+3. Save and trigger a new deployment
+
+### Error: "Output directory 'build' not found"
+
+**Cause**: The build command didn't run, so the `build` directory doesn't exist.
+
+**Solution**:
+
+1. Make sure **Build command** is set to `npm run build` in the dashboard
+2. Check that Node.js version is set to 18 or higher
+3. Verify that `package.json` has a `build` script
+4. Check build logs for errors during the build step
+
 ### Build Fails
 
 - Check that all environment variables are set
-- Verify Node.js version (18+)
+- Verify Node.js version (18+) is set in dashboard
 - Check build logs for specific errors
+- Ensure `npm install` completes successfully before build
 
 ### Routes Don't Work
 
-- Ensure `_redirects` file is in the `public/` folder
+- Ensure `_redirects` file is in the `public/` folder (it will be copied to build)
 - Verify the file is copied to the build output
 - Make sure you're deploying to Pages, not Workers
+- The `_redirects` file should contain: `/*  /index.html  200`
 
 ### Environment Variables Not Working
 
 - Restart the build after adding variables
 - Verify variable names start with `REACT_APP_`
 - Check that variables are set for the correct environment (Production/Preview)
+- Make sure variables are saved before deploying
 
 ### Deployment Goes to Workers Instead of Pages
 
 - **Solution**: Always use `wrangler pages deploy`, never `wrangler deploy`
 - Check that you're using the correct command in your CI/CD pipeline
 - The `wrangler.toml` file is optional for Pages - you don't need `[assets]` section
+
+### "No wrangler.toml file found"
+
+**This is normal and OK!** Cloudflare Pages doesn't require `wrangler.toml` when using the dashboard. The build settings are configured in the dashboard UI.
 
 ## Notes
 
