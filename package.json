@@ -1,7 +1,8 @@
 {
-  "name": "medical-simplifier",
+  "name": "Medi-Chat",
   "version": "1.0.0",
-  "description": "Medical Instruction Simplifier - React Frontend",
+  "homepage": ".",
+  "description": "Medi-Chat - React Frontend",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
