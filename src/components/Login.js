@@ -13,17 +13,50 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signIn, signUp } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (email && password) {
-      login(email, false);
-      navigate('/search');
-    } else {
-      alert('Please enter both email and password');
+    setError('');
+    setLoading(true);
+
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      setLoading(false);
+      return;
+    }
+
+    if (isSignUp && !fullName) {
+      setError('Please enter your full name');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (isSignUp) {
+        const { data, error: signUpError } = await signUp(email, password, fullName);
+        if (signUpError) {
+          setError(signUpError.message || 'Failed to create account');
+        } else {
+          // Show success message - user may need to verify email
+          alert('Account created! Please check your email to verify your account, then sign in.');
+          setIsSignUp(false);
+        }
+      } else {
+        const { data, error: signInError } = await signIn(email, password);
+        if (signInError) {
+          setError(signInError.message || 'Failed to sign in');
+        } else {
+          navigate('/search');
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,6 +120,11 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {isSignUp && (
                   <div className="space-y-2">
@@ -98,6 +136,7 @@ const Login = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required={isSignUp}
+                      disabled={loading}
                     />
                   </div>
                 )}
@@ -110,6 +149,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -121,11 +161,13 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
+                    minLength={isSignUp ? 6 : undefined}
                   />
                 </div>
                 <div className="pt-2">
-                  <Button type="submit" className="w-full">
-                    {isSignUp ? 'Create Account' : 'Sign In'}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
                   </Button>
                 </div>
               </form>

@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Upload, Search as SearchIcon, FileText, X } from 'lucide-react';
+import { saveSearch, getSearchHistory } from '../services/searchService';
+import { searchDictionary } from '../services/dictionaryService';
+import { Upload, Search as SearchIcon, FileText, X, History, Trash2, Book } from 'lucide-react';
 import './Search.css';
 
 const Search = () => {
@@ -12,8 +14,13 @@ const Search = () => {
   const [showResults, setShowResults] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [fileName, setFileName] = useState('');
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [dictionaryResults, setDictionaryResults] = useState([]);
+  const [showDictionaryResults, setShowDictionaryResults] = useState(false);
+  const [searchMode, setSearchMode] = useState('ai'); // 'ai' or 'dictionary'
   const fileInputRef = useRef(null);
-  const { userEmail, logout } = useAuth();
+  const { user, userEmail, logout } = useAuth();
   const navigate = useNavigate();
 
   const exampleQueries = [
@@ -22,6 +29,25 @@ const Search = () => {
     'How do I use my blood pressure monitor?',
     'What does this medical procedure involve?'
   ];
+
+  // Load search history on component mount
+  useEffect(() => {
+    if (user) {
+      loadSearchHistory();
+    }
+  }, [user]);
+
+  const loadSearchHistory = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await getSearchHistory(user.id, 10);
+      if (!error && data) {
+        setSearchHistory(data);
+      }
+    } catch (error) {
+      console.error('Error loading search history:', error);
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -57,7 +83,7 @@ const Search = () => {
         setMedicalText(data.text || '');
         // Auto-submit if text was extracted
         if (data.text) {
-          await simplifyText(data.text);
+          await simplifyText(data.text, true);
         }
       } else {
         throw new Error(data.error || 'Unknown error occurred');
@@ -70,7 +96,7 @@ const Search = () => {
     }
   };
 
-  const simplifyText = async (text) => {
+  const simplifyText = async (text, fileUploaded = false) => {
     setIsLoading(true);
     setShowResults(false);
 
@@ -92,6 +118,18 @@ const Search = () => {
       if (data.success) {
         setResult(data.result);
         setShowResults(true);
+        
+        // Save search to Supabase if user is logged in
+        if (user && user.id) {
+          try {
+            await saveSearch(user.id, text, data.result, fileUploaded);
+            // Reload search history
+            loadSearchHistory();
+          } catch (saveError) {
+            console.error('Error saving search:', saveError);
+            // Don't show error to user - search worked, just history save failed
+          }
+        }
       } else {
         throw new Error(data.error || 'Unknown error occurred');
       }
@@ -118,7 +156,39 @@ const Search = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setMedicalText(searchQuery);
-      await simplifyText(searchQuery);
+      if (searchMode === 'dictionary') {
+        await searchDictionaryTerms(searchQuery);
+      } else {
+        await simplifyText(searchQuery);
+      }
+    }
+  };
+
+  const searchDictionaryTerms = async (term) => {
+    setIsLoading(true);
+    setShowDictionaryResults(false);
+    setShowResults(false);
+
+    try {
+      const { data, error } = await searchDictionary(term, false);
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to search dictionary');
+      }
+
+      if (data && data.length > 0) {
+        setDictionaryResults(data);
+        setShowDictionaryResults(true);
+      } else {
+        alert('No medical terms found. Try searching with AI simplification instead.');
+        setSearchMode('ai');
+        await simplifyText(term);
+      }
+    } catch (error) {
+      console.error('Error searching dictionary:', error);
+      alert(`Failed to search dictionary: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,6 +205,8 @@ const Search = () => {
     setMedicalText('');
     setResult('');
     setShowResults(false);
+    setShowDictionaryResults(false);
+    setDictionaryResults([]);
     setSearchQuery('');
     handleRemoveFile();
   };
@@ -163,9 +235,28 @@ const Search = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Quick search medical instructions..."
+                  placeholder="Quick search medical instructions or terms..."
                   className="search-bar-input"
                 />
+              </div>
+              <div className="search-mode-toggle">
+                <button
+                  type="button"
+                  onClick={() => setSearchMode('dictionary')}
+                  className={`mode-btn ${searchMode === 'dictionary' ? 'active' : ''}`}
+                  title="Search Medical Dictionary"
+                >
+                  <Book size={16} />
+                  Dictionary
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchMode('ai')}
+                  className={`mode-btn ${searchMode === 'ai' ? 'active' : ''}`}
+                  title="AI Simplification"
+                >
+                  AI
+                </button>
               </div>
               <button type="submit" className="btn btn-primary search-btn">
                 Search
@@ -258,6 +349,39 @@ const Search = () => {
               </button>
             </div>
           )}
+
+          {showDictionaryResults && dictionaryResults.length > 0 && (
+            <div className="results-container dictionary-results">
+              <h2>
+                <Book size={24} className="inline-icon" />
+                Medical Dictionary Results
+              </h2>
+              <div className="dictionary-list">
+                {dictionaryResults.map((item) => (
+                  <div key={item.id} className="dictionary-item">
+                    <h3 className="dictionary-term">{item.medical_term}</h3>
+                    <p className="dictionary-definition">{item.definition}</p>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setMedicalText(item.medical_term);
+                        setSearchMode('ai');
+                        simplifyText(item.medical_term);
+                      }}
+                    >
+                      Simplify with AI
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button className="btn btn-secondary" onClick={() => {
+                setShowDictionaryResults(false);
+                setDictionaryResults([]);
+              }}>
+                Close
+              </button>
+            </div>
+          )}
           
           <div className="examples-section">
             <h3>Example Queries</h3>
@@ -273,6 +397,51 @@ const Search = () => {
               ))}
             </div>
           </div>
+
+          {/* Search History */}
+          {user && searchHistory.length > 0 && (
+            <div className="search-history-section">
+              <div className="history-header">
+                <h3>Recent Searches</h3>
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="history-toggle-btn"
+                >
+                  <History size={20} />
+                  {showHistory ? 'Hide' : 'Show'} History
+                </button>
+              </div>
+              {showHistory && (
+                <div className="history-list">
+                  {searchHistory.map((search) => (
+                    <div key={search.id} className="history-item">
+                      <div className="history-item-content">
+                        <div className="history-query">
+                          {search.file_uploaded && <FileText size={16} className="file-indicator" />}
+                          <span className="history-text">
+                            {search.query.substring(0, 100)}
+                            {search.query.length > 100 ? '...' : ''}
+                          </span>
+                        </div>
+                        <div className="history-date">
+                          {new Date(search.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setMedicalText(search.query);
+                          simplifyText(search.query, search.file_uploaded);
+                        }}
+                        className="history-use-btn"
+                      >
+                        Use
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

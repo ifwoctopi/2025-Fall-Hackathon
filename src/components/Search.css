@@ -66,6 +66,44 @@
   white-space: nowrap;
 }
 
+.search-mode-toggle {
+  display: flex;
+  gap: 4px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 2px;
+  background: white;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.mode-btn:hover {
+  background: #f0f0f0;
+}
+
+.mode-btn.active {
+  background: #667eea;
+  color: white;
+}
+
+.mode-btn.active:hover {
+  background: #764ba2;
+}
+
 .nav-logo h2 {
   color: #667eea;
   font-size: 24px;
@@ -383,6 +421,168 @@
   transform: translateY(-2px);
 }
 
+.search-history-section {
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.history-header h3 {
+  color: #333;
+  font-size: 20px;
+}
+
+.history-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.history-toggle-btn:hover {
+  background: #e0e0e0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.history-item:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.history-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-query {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.file-indicator {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.history-text {
+  flex: 1;
+}
+
+.history-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.history-use-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+  margin-left: 12px;
+}
+
+.history-use-btn:hover {
+  background: #764ba2;
+  transform: translateY(-1px);
+}
+
+.dictionary-results {
+  border-left-color: #10b981;
+}
+
+.dictionary-results h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.inline-icon {
+  display: inline-block;
+  vertical-align: middle;
+  color: #10b981;
+}
+
+.dictionary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dictionary-item {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.dictionary-item:hover {
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.dictionary-term {
+  color: #10b981;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.dictionary-definition {
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .search-section {
     padding: 20px;
@@ -421,6 +621,37 @@
 
   .file-upload-label {
     padding: 30px 15px;
+  }
+
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .history-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .history-use-btn {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .search-mode-toggle {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .mode-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .search-bar-form {
+    gap: 8px;
   }
 }
 
