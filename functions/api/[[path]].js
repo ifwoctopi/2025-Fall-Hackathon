@@ -70,9 +70,9 @@ async function extractTextFromFile(file, filename) {
     const text = await file.text();
     return text;
   } else if (fileExtension === 'pdf') {
-    // PDF parsing is complex in Pages Functions - for now, return an error
-    // In production, you might want to use a PDF parsing service
-    throw new Error('PDF parsing is not yet supported in the Cloudflare Pages Function. Please convert your PDF to text format (.txt) first.');
+    // PDFs should be handled client-side before reaching this function
+    // This is a fallback in case a PDF somehow reaches the API
+    throw new Error('PDF files should be processed client-side. If you see this error, please try uploading the PDF again.');
   } else {
     throw new Error(`Unsupported file type: ${fileExtension}. Supported types: ${textExtensions.join(', ')}, pdf`);
   }

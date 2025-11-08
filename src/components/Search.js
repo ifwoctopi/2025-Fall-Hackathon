@@ -4,7 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { saveSearch, getSearchHistory } from '../services/searchService';
 import { Upload, FileText, X, History, Book } from 'lucide-react';
 import API_URL from '../config/api';
+import * as pdfjsLib from 'pdfjs-dist';
 import './Search.css';
+
+// Configure pdf.js worker - use unpkg CDN for better reliability
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
 const Search = () => {
   const [medicalText, setMedicalText] = useState('');
@@ -45,14 +49,44 @@ const Search = () => {
     }
   }, [user, loadSearchHistory]);
 
+  /**
+   * Extract text from PDF file using pdf.js
+   */
+  const extractTextFromPDF = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+
+      // Extract text from all pages
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+
+      return fullText.trim();
+    } catch (error) {
+      console.error('Error extracting PDF text:', error);
+      throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     // Check file type
     const allowedTypes = ['text/plain', 'text/markdown', 'application/pdf', 'text/csv'];
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
-      alert('Please upload a text file (.txt, .md) or PDF (.pdf)');
+    const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isTextFile = allowedTypes.includes(file.type) || 
+                      file.name.endsWith('.txt') || 
+                      file.name.endsWith('.md') || 
+                      file.name.endsWith('.csv');
+
+    if (!isTextFile && !isPDF) {
+      alert('Please upload a text file (.txt, .md, .csv) or PDF (.pdf)');
       return;
     }
 
@@ -60,33 +94,50 @@ const Search = () => {
     setIsLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      let textContent = '';
 
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to process file');
-      }
-
-      if (data.success) {
-        setUploadedFile(file);
-        setMedicalText(data.text || '');
-        // Auto-submit if text was extracted
-        if (data.text) {
-          await simplifyText(data.text, true);
+      if (isPDF) {
+        // Extract text from PDF client-side
+        textContent = await extractTextFromPDF(file);
+        
+        if (!textContent || !textContent.trim()) {
+          throw new Error('PDF appears to be empty or contains only images. Unable to extract text.');
         }
+
+        // Set the extracted text and auto-submit
+        setUploadedFile(file);
+        setMedicalText(textContent);
+        await simplifyText(textContent, true);
       } else {
-        throw new Error(data.error || 'Unknown error occurred');
+        // For text files, use the upload API
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/api/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to process file');
+        }
+
+        if (data.success) {
+          setUploadedFile(file);
+          setMedicalText(data.text || '');
+          // Auto-submit if text was extracted
+          if (data.text) {
+            await simplifyText(data.text, true);
+          }
+        } else {
+          throw new Error(data.error || 'Unknown error occurred');
+        }
       }
     } catch (error) {
       console.error('Error:', error);
-      alert(`Failed to upload file: ${error.message}`);
+      alert(`Failed to process file: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
