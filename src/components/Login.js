@@ -37,7 +37,7 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { data, error: signUpError } = await signUp(email, password, fullName);
+        const { error: signUpError } = await signUp(email, password, fullName);
         if (signUpError) {
           setError(signUpError.message || 'Failed to create account');
         } else {
@@ -46,7 +46,7 @@ const Login = () => {
           setIsSignUp(false);
         }
       } else {
-        const { data, error: signInError } = await signIn(email, password);
+        const { error: signInError } = await signIn(email, password);
         if (signInError) {
           setError(signInError.message || 'Failed to sign in');
         } else {
