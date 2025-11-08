@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAllDictionaryTerms } from '../services/dictionaryService';
-import { Search as SearchIcon, Book, X, Info } from 'lucide-react';
+import { Search as SearchIcon, Book, X, Info, HelpCircle } from 'lucide-react';
 import './Dictionary.css';
 
 const Dictionary = () => {
@@ -113,6 +113,15 @@ const Dictionary = () => {
             <p className="subtitle">
               Browse and search medical terms. Click on any term to see the full definition and why it matters.
             </p>
+            <div className="header-actions">
+              <button 
+                className="btn btn-primary quiz-btn" 
+                onClick={() => navigate('/quiz')}
+              >
+                <HelpCircle size={18} style={{ marginRight: '8px' }} />
+                Quiz Yourself
+              </button>
+            </div>
           </div>
 
           <div className="search-container">
