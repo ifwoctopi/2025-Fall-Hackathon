@@ -1,5 +1,6 @@
 .search-page {
   min-height: 100vh;
+  background: linear-gradient(to bottom, #dbeafe, #bfdbfe);
 }
 
 .navbar {
@@ -54,6 +55,11 @@
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.3s;
+  text-align: center;
+}
+
+.search-bar-input::placeholder {
+  text-align: center;
 }
 
 .search-bar-input:focus {
@@ -319,11 +325,16 @@
   font-family: inherit;
   resize: vertical;
   transition: border-color 0.3s;
+  text-align: center;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #667eea;
+}
+
+.search-input::placeholder {
+  text-align: center;
 }
 
 .btn {
@@ -432,7 +443,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  text-align: left;
+  text-align: center;
   transition: all 0.3s;
   color: #333;
   font-family: inherit;

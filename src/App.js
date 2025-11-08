@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Search from './components/Search';
 import Dictionary from './components/Dictionary';
-import Quiz from './components/Quiz';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -41,14 +40,6 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dictionary />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/quiz"
-        element={
-          <ProtectedRoute>
-            <Quiz />
           </ProtectedRoute>
         }
       />

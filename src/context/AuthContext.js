@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../config/supabase';
+import { supabase, isSupabaseConfigured } from '../config/supabase';
 
 const AuthContext = createContext();
 
@@ -17,33 +17,55 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If Supabase isn't configured, allow demo mode (no auth required)
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setIsAuthenticated(true); // Allow access in demo mode
+      setUser({ id: 'demo-user', email: 'demo@example.com' }); // Demo user object
+      return;
+    }
+
     // Check if user is already logged in
     checkUser();
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser(session.user);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-      setLoading(false);
-    });
+    try {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+        setLoading(false);
+      });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
+    } catch (error) {
+      console.error('Error setting up auth listener:', error);
+      setLoading(false);
+      return () => {};
+    }
   }, []);
 
   const checkUser = async () => {
     try {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
+      }
       if (session) {
         setUser(session.user);
         setIsAuthenticated(true);
@@ -56,6 +78,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password, fullName) => {
+    if (!isSupabaseConfigured) {
+      return { 
+        data: null, 
+        error: { 
+          message: 'Authentication is not configured. Please set up Supabase to use this feature. See SUPABASE_SETUP.md for instructions.' 
+        } 
+      };
+    }
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -77,6 +108,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signIn = async (email, password) => {
+    if (!isSupabaseConfigured) {
+      return { 
+        data: null, 
+        error: { 
+          message: 'Authentication is not configured. Please set up Supabase to use this feature. See SUPABASE_SETUP.md for instructions.' 
+        } 
+      };
+    }
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
