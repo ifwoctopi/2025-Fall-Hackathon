@@ -29,12 +29,15 @@ const Quiz = () => {
     try {
       const { data, error } = await getAllDictionaryTerms();
       if (error) {
-        throw new Error(error.message || 'Failed to load dictionary terms');
+        console.warn('Error loading dictionary terms (this is OK if Supabase is not configured):', error.message);
+        setAllTerms([]); // Set empty array instead of throwing
+        return;
       }
       setAllTerms(data || []);
     } catch (error) {
       console.error('Error loading dictionary terms:', error);
-      alert(`Failed to load dictionary: ${error.message}`);
+      setAllTerms([]); // Set empty array to allow component to render
+      // Don't show alert - component will show message if no terms available
     } finally {
       setIsLoading(false);
     }
