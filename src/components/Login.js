@@ -67,7 +67,7 @@ const Login = () => {
         <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Welcome to Medical Simplifier</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">Welcome to Medi-Chat</h1>
               <p className="text-lg mb-8 text-white/90">
                 Transform complex medical instructions into simple, easy-to-understand language. 
                 Get personalized assistance from our AI medical assistant.
@@ -115,7 +115,7 @@ const Login = () => {
               <CardDescription>
                 {isSignUp 
                   ? 'Get started with your medical information portal'
-                  : 'Enter your credentials to access the medical simplifier'
+                  : 'Enter your credentials to access Medi-Chat'
                 }
               </CardDescription>
             </CardHeader>
