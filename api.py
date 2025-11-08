@@ -3,6 +3,12 @@ from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import io
+try:
+    import PyPDF2
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
 
 # Load environment variables
 load_dotenv()
@@ -71,6 +77,96 @@ def simplify():
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """API endpoint to upload and extract text from files."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        # Check file extension
+        filename = file.filename.lower()
+        allowed_extensions = ['.txt', '.md', '.pdf', '.csv']
+        
+        if not any(filename.endswith(ext) for ext in allowed_extensions):
+            return jsonify({
+                'success': False,
+                'error': f'File type not supported. Please upload: {", ".join(allowed_extensions)}'
+            }), 400
+        
+        # Read file content based on type
+        text_content = ''
+        
+        if filename.endswith('.txt') or filename.endswith('.md') or filename.endswith('.csv'):
+            # Read text files directly
+            try:
+                # Try to decode as UTF-8
+                text_content = file.read().decode('utf-8')
+            except UnicodeDecodeError:
+                # Try other encodings
+                file.seek(0)  # Reset file pointer
+                try:
+                    text_content = file.read().decode('latin-1')
+                except:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Unable to read file. Please ensure it is a valid text file.'
+                    }), 400
+        
+        elif filename.endswith('.pdf'):
+            # Extract text from PDF files
+            if not PDF_SUPPORT:
+                return jsonify({
+                    'success': False,
+                    'error': 'PDF support not available. Please install PyPDF2: pip install PyPDF2'
+                }), 500
+            
+            try:
+                # Read PDF file
+                file.seek(0)  # Reset file pointer
+                pdf_reader = PyPDF2.PdfReader(file)
+                
+                # Extract text from all pages
+                text_content = ''
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    text_content += page.extract_text() + '\n'
+                
+                if not text_content.strip():
+                    return jsonify({
+                        'success': False,
+                        'error': 'PDF appears to be empty or contains only images. Unable to extract text.'
+                    }), 400
+                    
+            except Exception as pdf_error:
+                return jsonify({
+                    'success': False,
+                    'error': f'Error reading PDF file: {str(pdf_error)}'
+                }), 400
+        
+        if not text_content.strip():
+            return jsonify({
+                'success': False,
+                'error': 'File appears to be empty or could not be read'
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'text': text_content,
+            'filename': file.filename
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error processing file: {str(e)}'
         }), 500
 
 @app.route('/api/health', methods=['GET'])
