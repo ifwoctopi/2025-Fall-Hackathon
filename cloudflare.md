@@ -50,10 +50,19 @@
    npm run build
 
    # Deploy using Wrangler Pages (not Workers)
-   npx wrangler pages deploy build --project-name=medical-simplifier
+   npx wrangler pages deploy build --project-name=medi-chat
    ```
 
    **Note**: Use `wrangler pages deploy`, not `wrangler deploy`. The `pages` command is for Cloudflare Pages (static sites), while `deploy` is for Workers.
+
+   **Alternative**: You can also deploy using the wrangler.toml configuration:
+
+   ```bash
+   npm run build
+   npx wrangler pages deploy
+   ```
+
+   The `[assets]` section in `wrangler.toml` specifies the build directory.
 
 ## Environment Variables
 

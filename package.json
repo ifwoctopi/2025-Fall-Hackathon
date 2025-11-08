@@ -21,8 +21,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && npx wrangler pages deploy build --project-name=medical-simplifier",
-    "deploy:prod": "npm run build && npx wrangler pages deploy build --project-name=medical-simplifier --branch=main"
+    "deploy": "npm run build && npx wrangler pages deploy build --project-name=medi-chat",
+    "deploy:prod": "npm run build && npx wrangler pages deploy build --project-name=medi-chat --branch=main"
   },
   "eslintConfig": {
     "extends": [
