@@ -28,6 +28,29 @@ const Search = () => {
     'What should I know before signing this legal document?'
   ];
 
+  const loadSearchHistory = useCallback(async () => {
+    if (!user || !user.id) return;
+    try {
+      const { data, error } = await getSearchHistory(user.id, 10);
+      if (!error && data) {
+        setSearchHistory(data);
+      } else if (error) {
+        // Silently fail - Supabase might not be configured
+        console.warn('Could not load search history:', error.message);
+      }
+    } catch (error) {
+      // Silently fail - don't crash the app if Supabase isn't configured
+      console.warn('Error loading search history (this is OK if Supabase is not configured):', error.message);
+    }
+  }, [user]);
+
+  // Load search history on component mount
+  useEffect(() => {
+    if (user && user.id) {
+      loadSearchHistory();
+    }
+  }, [user, loadSearchHistory]);
+
   /**
    * Extract text from PDF file using pdf.js
    */
@@ -159,11 +182,7 @@ const Search = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      if (error?.message?.includes('Failed to fetch')) {
-        alert('Cannot reach API server. Start backend with: npm run dev:api');
-      } else {
-        alert(`Failed to simplify document: ${error.message}`);
-      }
+      alert(`Failed to simplify instructions: ${error.message}\n\nMake sure the backend API is running on http://localhost:5000`);
     } finally {
       setIsLoading(false);
     }
