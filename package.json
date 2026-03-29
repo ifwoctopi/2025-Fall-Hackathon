@@ -16,15 +16,17 @@
   "devDependencies": {
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6"
+    "tailwindcss": "^3.3.6",
+    "wrangler": "^4.69.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && npx wrangler pages deploy build --project-name=medi-chat",
-    "deploy:prod": "npm run build && npx wrangler pages deploy build --project-name=medi-chat --branch=main"
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:prod": "npm run build && npx wrangler pages deploy build --project-name=medi-chat --branch=main",
+    "preview": "npm run build && wrangler dev"
   },
   "eslintConfig": {
     "extends": [
